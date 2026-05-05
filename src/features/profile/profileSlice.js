@@ -1,49 +1,37 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { fetchLocalProfile, saveLocalProfile } from "../../db/profileRepository";
-import { fetchProfileRemote, saveProfileRemote } from "../../firebase/databaseService";
 import { getErrorMessage } from "../../utils/validators";
 
-export const loadProfile = createAsyncThunk("profile/loadProfile", async (user, { rejectWithValue }) => {
+export const LOCAL_PROFILE_ID = "local-profile";
+
+export const loadProfile = createAsyncThunk("profile/loadProfile", async (_, { rejectWithValue }) => {
   try {
-    const localProfile = await fetchLocalProfile(user.uid);
-    let remoteProfile = null;
+    const localProfile = await fetchLocalProfile(LOCAL_PROFILE_ID);
 
-    try {
-      remoteProfile = await fetchProfileRemote(user.uid);
-    } catch (error) {
-      remoteProfile = null;
-    }
-
-    return {
-      id: user.uid,
-      email: user.email,
-      displayName: user.displayName || remoteProfile?.displayName || localProfile?.displayName || "",
-      avatarUri: localProfile?.avatarUri || remoteProfile?.avatarUri || null,
-      updatedAt: localProfile?.updatedAt || remoteProfile?.updatedAt || null,
+    return localProfile || {
+      id: LOCAL_PROFILE_ID,
+      email: "",
+      displayName: "Invitado",
+      avatarUri: null,
+      updatedAt: null,
     };
   } catch (error) {
     return rejectWithValue(getErrorMessage(error, "No se pudo cargar el perfil"));
   }
 });
 
-export const saveProfile = createAsyncThunk("profile/saveProfile", async ({ userId, profile }, { rejectWithValue }) => {
+export const saveProfile = createAsyncThunk("profile/saveProfile", async (profile, { rejectWithValue }) => {
   try {
     const nextProfile = {
-      id: userId,
-      email: profile.email,
+      id: LOCAL_PROFILE_ID,
+      email: profile.email || "",
       displayName: profile.displayName,
       avatarUri: profile.avatarUri,
       updatedAt: new Date().toISOString(),
     };
 
     await saveLocalProfile(nextProfile);
-
-    try {
-      await saveProfileRemote(userId, nextProfile);
-      return { ...nextProfile, syncError: null };
-    } catch (error) {
-      return { ...nextProfile, syncError: getErrorMessage(error, "Perfil guardado solo en SQLite") };
-    }
+    return nextProfile;
   } catch (error) {
     return rejectWithValue(getErrorMessage(error, "No se pudo guardar el perfil"));
   }
@@ -79,7 +67,7 @@ const profileSlice = createSlice({
       .addCase(saveProfile.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.data = action.payload;
-        state.syncError = action.payload.syncError;
+        state.syncError = null;
       })
       .addCase(saveProfile.rejected, (state, action) => {
         state.status = "failed";

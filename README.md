@@ -1,28 +1,30 @@
 # Ecommerce React Native
 
-Aplicacion movil ecommerce desarrollada con React Native y Expo. Incluye autenticacion, navegacion por categorias, detalle de productos, carrito persistente, ordenes, perfil de usuario, cache local con SQLite y sincronizacion remota con Firebase Realtime Database.
+Aplicacion movil ecommerce desarrollada con Expo y React Native. La app abre directamente en la experiencia de tienda, permite navegar categorias y productos, administrar un carrito persistente, crear ordenes en Firebase Realtime Database, editar un perfil local y seleccionar una foto con camara o galeria.
 
 ## Features
 
-- Registro e inicio de sesion con Firebase Authentication.
-- Productos y categorias sincronizados desde Firebase Realtime Database.
-- Fallback offline con cache SQLite y datos semilla iniciales.
-- Carrito administrado con Redux Toolkit y persistido en SQLite.
-- Creacion y listado de ordenes en Firebase Realtime Database.
-- Perfil de usuario guardado en SQLite y sincronizado con Firebase.
-- Foto de perfil usando galeria o camara con `expo-image-picker`.
-- Navegacion con stack y tabs usando React Navigation.
-- Componentes reutilizables para botones, cards, categorias, carga y estados vacios.
+- Catalogo de categorias y productos desde Firebase Realtime Database.
+- Consumo remoto con RTK Query y endpoints REST de Firebase.
+- Fallback offline con cache local SQLite y datos semilla.
+- Carrito global con Redux Toolkit y persistencia SQLite.
+- Creacion y listado de ordenes usando RTK Query.
+- Perfil local editable guardado con SQLite.
+- Foto de perfil con camara o galeria usando `expo-image-picker`.
+- Navegacion con React Navigation, tabs y stacks.
+- Listas optimizadas con `FlatList`.
+- Componentes reutilizables para productos, categorias, carrito, ordenes, botones, carga, error y estados vacios.
 
-## Librerias Usadas
+## Tecnologias Usadas
 
-- Expo: entorno de desarrollo y ejecucion React Native.
-- React Navigation: navegacion por stacks y tabs.
-- Redux Toolkit y React Redux: estado global y flujos asincronicos.
-- Firebase JS SDK: Auth y Realtime Database.
-- expo-sqlite: persistencia local entre reinicios.
-- expo-image-picker: acceso a galeria y camara.
-- AsyncStorage: persistencia de sesion para Firebase Auth en React Native.
+- Expo SDK 54.
+- React Native.
+- React Navigation.
+- Redux Toolkit.
+- RTK Query.
+- Firebase Realtime Database REST API.
+- expo-sqlite.
+- expo-image-picker.
 
 ## Instalacion
 
@@ -30,33 +32,40 @@ Aplicacion movil ecommerce desarrollada con React Native y Expo. Incluye autenti
 npm install
 ```
 
+## Configuracion De Entorno
+
+Crear un archivo `.env` en la raiz del proyecto basado en `.env.example`.
+
+```env
+EXPO_PUBLIC_FIREBASE_API_KEY=tu_api_key
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=ecommerce-rn-final.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_DATABASE_URL=https://ecommerce-rn-final-default-rtdb.firebaseio.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=ecommerce-rn-final
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=ecommerce-rn-final.firebasestorage.app
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_messaging_sender_id
+EXPO_PUBLIC_FIREBASE_APP_ID=tu_app_id
+```
+
+Expo inyecta variables publicas cuando se leen con dot notation directa, por ejemplo `process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL`.
+
 ## Ejecutar Proyecto
 
 ```bash
 npx expo start -c
 ```
 
-Desde Expo se puede abrir en Android, iOS o Expo Go escaneando el QR.
+La opcion `-c` limpia la cache de Metro para asegurar que Expo tome el `.env` actualizado.
 
-## Configuracion Firebase
+## Uso De Firebase
 
-1. Crear un proyecto en Firebase Console.
-2. Agregar una app web y copiar las credenciales.
-3. Activar Authentication con Email/Password.
-4. Crear una Realtime Database.
-5. Crear un archivo `.env` basado en `.env.example`.
+Firebase se usa solo como fuente de datos. La app no usa Firebase Authentication y no requiere login para navegar ni comprar.
 
-Expo inyecta estas variables publicas cuando se leen con dot notation directa, por ejemplo `process.env.EXPO_PUBLIC_FIREBASE_API_KEY`.
+RTK Query consume Realtime Database con estos paths REST:
 
-```env
-EXPO_PUBLIC_FIREBASE_API_KEY=tu_api_key
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_DATABASE_URL=https://tu_proyecto-default-rtdb.firebaseio.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=tu_proyecto
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_proyecto.appspot.com
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
-EXPO_PUBLIC_FIREBASE_APP_ID=tu_app_id
-```
+- `/categories.json`
+- `/products.json`
+- `/products/{productId}.json`
+- `/orders.json`
 
 Estructura sugerida para Realtime Database:
 
@@ -80,34 +89,85 @@ Estructura sugerida para Realtime Database:
       "image": "https://..."
     }
   },
-  "orders": {},
-  "profiles": {}
+  "orders": {}
 }
+```
+
+Para una demo sin autenticacion, las reglas de Realtime Database deben permitir lectura de `categories`, `products` y `orders`, y escritura en `orders`.
+
+## RTK Query
+
+El servicio esta en `src/services/shopApi.js` y exporta hooks generados:
+
+- `useGetProductsQuery`
+- `useGetProductQuery`
+- `useGetCategoriesQuery`
+- `useGetOrdersQuery`
+- `useCreateOrderMutation`
+
+`shopApi.reducer` y `shopApi.middleware` estan registrados en `src/app/store.js`.
+
+## SQLite
+
+SQLite se inicializa en `src/db/database.js` y persiste:
+
+- `cart_items`: carrito local.
+- `profile`: perfil local y foto seleccionada.
+- `cached_categories`: ultimo catalogo de categorias.
+- `cached_products`: ultimo catalogo de productos.
+
+Cuando RTK Query obtiene productos o categorias desde Firebase, la app actualiza el cache SQLite. Si Firebase no responde, las pantallas usan cache local; si aun no existe cache, usan datos semilla.
+
+## Camara Y Galeria
+
+La pantalla `EditProfileScreen` usa `expo-image-picker` para seleccionar una imagen desde galeria o tomar una foto con camara. Los permisos estan configurados en `app.json`.
+
+## Navegacion
+
+La app abre directamente en el flujo ecommerce. No hay pantalla obligatoria de login.
+
+```text
+MainTabs
+  ShopStack
+    Home
+    Category
+    ProductDetail
+  Cart
+  Orders
+  ProfileStack
+    Profile
+    EditProfile
 ```
 
 ## Estructura Del Proyecto
 
 ```text
 src/
-  app/              store Redux Toolkit
-  components/       UI reutilizable
-  constants/        colores y rutas
-  data/             datos semilla offline
-  db/               SQLite y repositorios locales
-  features/         slices Redux por dominio
-  firebase/         config y servicios Firebase
-  navigation/       stacks y tabs
-  screens/          pantallas auth, tienda y perfil
-  utils/            formato y validaciones
+  app/          store Redux Toolkit y RTK Query
+  components/   UI reutilizable
+  constants/    colores y rutas
+  data/         datos semilla offline
+  db/           SQLite y repositorios locales
+  features/     slices locales Redux Toolkit
+  firebase/     configuracion de entorno Firebase
+  hooks/        hooks para cache/fallback local
+  navigation/   tabs y stacks
+  screens/      pantallas ecommerce y perfil
+  services/     RTK Query API service
+  utils/        formato y validaciones
 ```
 
-## Flujo De La App
+## Final Project Rubric Compliance
 
-Login/Signup -> Home -> Categorias -> Productos -> Detalle -> Carrito -> Orden -> Perfil.
-
-## Persistencia Y Offline
-
-SQLite guarda el carrito, el perfil local y el ultimo catalogo cacheado. Si Firebase no esta configurado o no hay conexion, la app muestra el catalogo cacheado; si todavia no hay cache, usa datos semilla para mantener el flujo navegable.
+- Optimized lists: implementadas con `FlatList` en catalogo, categorias, carrito y ordenes.
+- Reusable components: `ProductCard`, `CategoryItem`, `CartItem`, `OrderItem`, `PrimaryButton`, `LoadingView`, `ErrorState` y `EmptyState`.
+- Navigation: implementada con React Navigation, tabs y native stacks.
+- State management: `useState` para estado local de UI/perfil e imagen; Redux Toolkit para carrito y perfil global/local.
+- Firebase: usado solo como fuente de datos mediante RTK Query y Realtime Database REST API.
+- Authentication: removida; la app no requiere login.
+- Device interface: implementada con `expo-image-picker` para camara y galeria.
+- Local persistence: implementada con SQLite para carrito, perfil y cache offline.
+- Startup: preparado para iniciar con `npx expo start -c`.
 
 ## Autor
 

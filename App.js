@@ -3,12 +3,8 @@ import { Provider, useDispatch } from "react-redux";
 import { StatusBar } from "expo-status-bar";
 import { store } from "./src/app/store";
 import { loadCartFromSQLite } from "./src/features/cart/cartSlice";
-import { setAuthReady, setAuthUser } from "./src/features/auth/authSlice";
-import { fetchCatalog } from "./src/features/products/productsSlice";
 import { loadProfile } from "./src/features/profile/profileSlice";
-import { fetchOrders } from "./src/features/orders/ordersSlice";
 import { initDatabase } from "./src/db/database";
-import { subscribeToAuthChanges } from "./src/firebase/authService";
 import AppNavigator from "./src/navigation/AppNavigator";
 import LoadingView from "./src/components/LoadingView";
 
@@ -23,7 +19,7 @@ function Bootstrap() {
       await initDatabase();
       await Promise.all([
         dispatch(loadCartFromSQLite()),
-        dispatch(fetchCatalog()),
+        dispatch(loadProfile()),
       ]);
 
       if (active) {
@@ -40,20 +36,6 @@ function Bootstrap() {
     return () => {
       active = false;
     };
-  }, [dispatch]);
-
-  useEffect(() => {
-    const unsubscribe = subscribeToAuthChanges((user) => {
-      dispatch(setAuthUser(user));
-      dispatch(setAuthReady());
-
-      if (user?.uid) {
-        dispatch(loadProfile(user));
-        dispatch(fetchOrders(user.uid));
-      }
-    });
-
-    return unsubscribe;
   }, [dispatch]);
 
   if (!databaseReady) {

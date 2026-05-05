@@ -1,16 +1,15 @@
-import { Alert, Image, StyleSheet, Text, View } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { useSelector } from "react-redux";
 import PrimaryButton from "../../components/PrimaryButton";
 import colors from "../../constants/colors";
 import { ROUTES } from "../../constants/routes";
-import { logoutUser } from "../../features/auth/authSlice";
 
-function Avatar({ profile, user }) {
+function Avatar({ profile }) {
   if (profile?.avatarUri) {
     return <Image source={{ uri: profile.avatarUri }} style={styles.avatarImage} />;
   }
 
-  const initial = (profile?.displayName || user?.email || "U").trim().charAt(0).toUpperCase();
+  const initial = (profile?.displayName || "Invitado").trim().charAt(0).toUpperCase();
   return (
     <View style={styles.avatarFallback}>
       <Text style={styles.avatarInitial}>{initial}</Text>
@@ -19,28 +18,15 @@ function Avatar({ profile, user }) {
 }
 
 export default function ProfileScreen({ navigation }) {
-  const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
   const profile = useSelector((state) => state.profile.data);
-  const syncError = useSelector((state) => state.profile.syncError);
-
-  const handleLogout = async () => {
-    try {
-      await dispatch(logoutUser()).unwrap();
-    } catch (error) {
-      Alert.alert("No se pudo cerrar sesion", String(error));
-    }
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.panel}>
-        <Avatar profile={profile} user={user} />
-        <Text style={styles.name}>{profile?.displayName || user?.displayName || "Usuario"}</Text>
-        <Text style={styles.email}>{profile?.email || user?.email}</Text>
-        {syncError ? <Text style={styles.warning}>{syncError}</Text> : null}
+        <Avatar profile={profile} />
+        <Text style={styles.name}>{profile?.displayName || "Invitado"}</Text>
+        <Text style={styles.email}>Perfil local guardado con SQLite</Text>
         <PrimaryButton title="Editar perfil" onPress={() => navigation.navigate(ROUTES.EDIT_PROFILE)} style={styles.button} />
-        <PrimaryButton title="Cerrar sesion" onPress={handleLogout} variant="secondary" />
       </View>
     </View>
   );
@@ -102,6 +88,5 @@ const styles = StyleSheet.create({
   button: {
     alignSelf: "stretch",
     marginTop: 20,
-    marginBottom: 10,
   },
 });

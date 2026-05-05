@@ -1,12 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
-import {
-  getAuth,
-  getReactNativePersistence,
-  initializeAuth,
-} from "firebase/auth";
-
 const firebaseApiKey = process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
 const firebaseAuthDomain = process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN;
 const firebaseDatabaseUrl = process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL;
@@ -33,17 +24,4 @@ export const firebaseConfig = {
   appId: firebaseAppId || "1:000000000000:web:demo",
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
-let authInstance;
-
-try {
-  authInstance = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
-} catch (error) {
-  authInstance = getAuth(app);
-}
-
-export const auth = authInstance;
-export const database = getDatabase(app);
+export const firebaseRestBaseUrl = firebaseConfig.databaseURL.replace(/\/$/, "");

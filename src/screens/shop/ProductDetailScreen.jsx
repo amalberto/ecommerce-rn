@@ -1,16 +1,18 @@
 import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import EmptyState from "../../components/EmptyState";
+import LoadingView from "../../components/LoadingView";
 import PrimaryButton from "../../components/PrimaryButton";
 import colors from "../../constants/colors";
 import { addCartItem } from "../../features/cart/cartSlice";
+import { useProductData } from "../../hooks/useProductData";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { getErrorMessage } from "../../utils/validators";
 
 export default function ProductDetailScreen({ route }) {
   const dispatch = useDispatch();
   const { productId } = route.params;
-  const product = useSelector((state) => state.products.items.find((item) => item.id === productId));
+  const { product, isLoading, isError } = useProductData(productId);
   const cartStatus = useSelector((state) => state.cart.status);
 
   const handleAdd = async () => {
@@ -22,6 +24,10 @@ export default function ProductDetailScreen({ route }) {
     }
   };
 
+  if (isLoading) {
+    return <LoadingView message="Cargando producto" />;
+  }
+
   if (!product) {
     return <EmptyState title="Producto no encontrado" message="Vuelve al catalogo y actualiza la lista." />;
   }
@@ -32,6 +38,7 @@ export default function ProductDetailScreen({ route }) {
       <View style={styles.body}>
         <Text style={styles.title}>{product.title}</Text>
         <Text style={styles.price}>{formatCurrency(product.price)}</Text>
+        {isError ? <Text style={styles.warning}>Mostrando datos locales disponibles.</Text> : null}
         <Text style={styles.description}>{product.description}</Text>
         <Text style={styles.stock}>Stock disponible: {product.stock ?? 0}</Text>
         <PrimaryButton title="Agregar al carrito" onPress={handleAdd} loading={cartStatus === "loading"} style={styles.button} />
@@ -79,6 +86,12 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 14,
     fontWeight: "700",
+  },
+  warning: {
+    marginTop: 10,
+    color: colors.warning,
+    fontSize: 13,
+    lineHeight: 18,
   },
   button: {
     marginTop: 22,

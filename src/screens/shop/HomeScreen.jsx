@@ -1,66 +1,66 @@
-import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import CategoryItem from "../../components/CategoryItem";
 import EmptyState from "../../components/EmptyState";
+import LoadingView from "../../components/LoadingView";
 import ProductCard from "../../components/ProductCard";
 import colors from "../../constants/colors";
 import { ROUTES } from "../../constants/routes";
-import { fetchCatalog } from "../../features/products/productsSlice";
+import { useCatalogData } from "../../hooks/useCatalogData";
 
 export default function HomeScreen({ navigation }) {
-  const dispatch = useDispatch();
-  const { categories, items, status, source, warning } = useSelector((state) => state.products);
+  const { categories, products, isLoading, isFetching, isError, source, refetch } = useCatalogData();
 
-  const refreshCatalog = () => {
-    dispatch(fetchCatalog());
-  };
+  if (isLoading) {
+    return <LoadingView message="Cargando catalogo" />;
+  }
 
   return (
-    <ScrollView
+    <FlatList
       style={styles.container}
+      data={products}
+      keyExtractor={(item) => item.id}
+      numColumns={2}
+      columnWrapperStyle={styles.row}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={status === "loading"} onRefresh={refreshCatalog} tintColor={colors.primary} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.kicker}>{source === "remote" ? "Catalogo sincronizado" : "Catalogo disponible"}</Text>
-        <Text style={styles.title}>Productos seleccionados para comprar desde el movil</Text>
-        {warning ? <Text style={styles.warning}>{warning}</Text> : null}
-      </View>
+      refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />}
+      ListHeaderComponent={(
+        <View>
+          <View style={styles.header}>
+            <Text style={styles.kicker}>{source === "remote" ? "Catalogo sincronizado" : "Catalogo disponible"}</Text>
+            <Text style={styles.title}>Productos seleccionados para comprar desde el movil</Text>
+            {isError && source !== "remote" ? <Text style={styles.warning}>Mostrando datos locales mientras Firebase no responde.</Text> : null}
+          </View>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Categorias</Text>
-      </View>
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={categories}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.categories}
-        renderItem={({ item }) => (
-          <CategoryItem
-            category={item}
-            onPress={() => navigation.navigate(ROUTES.CATEGORY, { categoryId: item.id, title: item.title })}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Categorias</Text>
+          </View>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={categories}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.categories}
+            renderItem={({ item }) => (
+              <CategoryItem
+                category={item}
+                onPress={() => navigation.navigate(ROUTES.CATEGORY, { categoryId: item.id, title: item.title })}
+              />
+            )}
           />
-        )}
-      />
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Destacados</Text>
-      </View>
-      {items.length ? (
-        <View style={styles.grid}>
-          {items.slice(0, 6).map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onPress={() => navigation.navigate(ROUTES.PRODUCT_DETAIL, { productId: product.id })}
-            />
-          ))}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Productos</Text>
+          </View>
         </View>
-      ) : (
-        <EmptyState title="No hay productos" message="Tira para actualizar el catalogo." />
       )}
-    </ScrollView>
+      ListEmptyComponent={<EmptyState title="No hay productos" message="Tira para actualizar el catalogo." />}
+      renderItem={({ item }) => (
+        <ProductCard
+          product={item}
+          onPress={() => navigation.navigate(ROUTES.PRODUCT_DETAIL, { productId: item.id })}
+        />
+      )}
+    />
   );
 }
 
@@ -109,10 +109,9 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     paddingRight: 8,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  row: {
     gap: 12,
+    marginBottom: 12,
     paddingHorizontal: 20,
   },
 });

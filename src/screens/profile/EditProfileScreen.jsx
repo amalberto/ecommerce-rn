@@ -9,16 +9,15 @@ import { getErrorMessage } from "../../utils/validators";
 
 export default function EditProfileScreen({ navigation }) {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
   const profile = useSelector((state) => state.profile.data);
   const status = useSelector((state) => state.profile.status);
   const [displayName, setDisplayName] = useState("");
   const [avatarUri, setAvatarUri] = useState(null);
 
   useEffect(() => {
-    setDisplayName(profile?.displayName || user?.displayName || "");
+    setDisplayName(profile?.displayName || "");
     setAvatarUri(profile?.avatarUri || null);
-  }, [profile, user]);
+  }, [profile]);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -67,12 +66,8 @@ export default function EditProfileScreen({ navigation }) {
 
     try {
       await dispatch(saveProfile({
-        userId: user.uid,
-        profile: {
-          email: user.email,
-          displayName: displayName.trim(),
-          avatarUri,
-        },
+        displayName: displayName.trim(),
+        avatarUri,
       })).unwrap();
       navigation.goBack();
     } catch (error) {
@@ -103,7 +98,7 @@ export default function EditProfileScreen({ navigation }) {
           onChangeText={setDisplayName}
           style={styles.input}
         />
-        <Text style={styles.email}>{user?.email}</Text>
+        <Text style={styles.email}>La foto y el nombre se guardan localmente con SQLite.</Text>
         <PrimaryButton title="Guardar cambios" onPress={handleSave} loading={status === "loading"} style={styles.saveButton} />
       </ScrollView>
     </KeyboardAvoidingView>
