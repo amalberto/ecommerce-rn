@@ -43,6 +43,6 @@ yarn-error.*
 /android
 
 # build artifacts
-builds/
+builds/*
 *.apk
 *.aab

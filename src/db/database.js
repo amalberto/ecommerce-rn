@@ -12,6 +12,7 @@ export const initDatabase = async () => {
       title TEXT NOT NULL,
       price REAL NOT NULL,
       quantity INTEGER NOT NULL,
+      stock INTEGER,
       image TEXT
     );
 
@@ -39,6 +40,13 @@ export const initDatabase = async () => {
       image TEXT
     );
   `);
+
+  const cartColumns = await db.getAllAsync("PRAGMA table_info(cart_items)");
+  const hasStockColumn = cartColumns.some((column) => column.name === "stock");
+
+  if (!hasStockColumn) {
+    await db.execAsync("ALTER TABLE cart_items ADD COLUMN stock INTEGER;");
+  }
 };
 
 export const getDatabase = () => db;

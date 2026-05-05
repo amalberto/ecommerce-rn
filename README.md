@@ -43,6 +43,10 @@ Las siguientes capturas corresponden a la APK instalada y ejecutada en un dispos
 | --- | --- | --- |
 | <img src="docs/evidence/flow-07-stock-updated.png" alt="Stock descontado después de comprar" width="180" /> | <img src="docs/evidence/flow-08-profile.png" alt="Perfil local" width="180" /> | <img src="docs/evidence/flow-09-edit-profile.png" alt="Edición de perfil con cámara y galería" width="180" /> |
 
+| Inicio limpio | Orden posterior | Stock posterior |
+| --- | --- | --- |
+| <img src="docs/evidence/validation-01-start.png" alt="Catálogo después de reinstalar la APK" width="180" /> | <img src="docs/evidence/validation-02-after-order.png" alt="Órdenes después de crear una orden nueva" width="180" /> | <img src="docs/evidence/validation-03-stock-after-order.png" alt="Stock descontado después de la orden nueva" width="180" /> |
+
 ## Evidencia técnica de validación
 
 Validación realizada el 5/5/2026 sobre un Motorola Edge 20 pro conectado por ADB.
@@ -53,7 +57,8 @@ Validación realizada el 5/5/2026 sobre un Motorola Edge 20 pro conectado por AD
 - `adb install -r builds/ecommerce-rn.apk`: instalación completada con `Success`.
 - `adb shell pm list packages com.amalberto.ecommercern`: paquete instalado como `com.amalberto.ecommercern`.
 - `adb shell pidof com.amalberto.ecommercern`: aplicación ejecutándose en el dispositivo.
-- APK final: `builds/ecommerce-rn.apk`, 29.707.352 bytes.
+- Prueba limpia posterior: se desinstaló la app, se instaló la APK final, se creó una orden nueva y el stock de `Zapatillas Urbanas Neo` bajó de 9 a 8.
+- APK final: disponible como asset en el release [v1.0.0](https://github.com/amalberto/ecommerce-rn/releases/tag/v1.0.0), 29.707.568 bytes.
 
 ## Instalación
 
@@ -76,6 +81,8 @@ EXPO_PUBLIC_FIREBASE_APP_ID=1:000000000000:web:tu_app_id
 ```
 
 La app consume Realtime Database mediante `EXPO_PUBLIC_FIREBASE_DATABASE_URL`. Las demás variables públicas se dejan como referencia para completar la configuración del proyecto Firebase, pero esta versión no usa Firebase Authentication ni inicializa el SDK de Firebase.
+
+Si `EXPO_PUBLIC_FIREBASE_DATABASE_URL` no está definida, la app muestra un `console.warn` y usa una URL demo solo como respaldo técnico. Para la entrega real, se debe completar la variable en `.env`.
 
 Expo inyecta variables públicas cuando se leen con notación de punto directa, por ejemplo `process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL`.
 
@@ -154,7 +161,7 @@ El servicio está en `src/services/shopApi.js` y exporta hooks generados:
 
 SQLite se inicializa en `src/db/database.js` y persiste:
 
-- `cart_items`: carrito local.
+- `cart_items`: carrito local, incluyendo cantidad y stock conocido del producto.
 - `profile`: perfil local y foto seleccionada.
 - `cached_categories`: último catálogo de categorías.
 - `cached_products`: último catálogo de productos.

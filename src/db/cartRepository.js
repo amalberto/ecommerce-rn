@@ -6,6 +6,7 @@ const mapRowToCartItem = (row) => ({
   title: row.title,
   price: row.price,
   quantity: row.quantity,
+  stock: Number.isFinite(Number(row.stock)) ? Number(row.stock) : undefined,
   image: row.image,
 });
 
@@ -15,14 +16,17 @@ export const fetchCartItems = async () => {
 };
 
 export const saveCartItem = async (item) => {
+  const stock = Number(item.stock);
+
   await getDatabase().runAsync(
-    `INSERT OR REPLACE INTO cart_items (id, product_id, title, price, quantity, image)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR REPLACE INTO cart_items (id, product_id, title, price, quantity, stock, image)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     item.id,
     item.productId,
     item.title,
     item.price,
     item.quantity,
+    Number.isFinite(stock) ? stock : null,
     item.image || null,
   );
 };
