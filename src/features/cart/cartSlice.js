@@ -13,12 +13,19 @@ export const loadCartFromSQLite = createAsyncThunk("cart/loadCartFromSQLite", as
 export const addCartItem = createAsyncThunk("cart/addCartItem", async (product, { getState, rejectWithValue }) => {
   try {
     const existing = getState().cart.items.find((item) => item.productId === product.id);
+    const stock = Number(product.stock ?? 0);
+
+    if (stock <= 0 || (existing?.quantity || 0) >= stock) {
+      throw new Error("No hay stock suficiente.");
+    }
+
     const item = {
       id: product.id,
       productId: product.id,
       title: product.title,
       price: product.price,
       image: product.image,
+      stock,
       quantity: existing ? existing.quantity + 1 : 1,
     };
 
@@ -34,6 +41,11 @@ export const incrementCartItem = createAsyncThunk("cart/incrementCartItem", asyn
     const existing = getState().cart.items.find((item) => item.id === id);
     if (!existing) {
       throw new Error("Producto no encontrado en el carrito");
+    }
+
+    const stock = Number(existing.stock);
+    if (Number.isFinite(stock) && existing.quantity >= stock) {
+      throw new Error("No hay stock suficiente.");
     }
 
     const item = { ...existing, quantity: existing.quantity + 1 };

@@ -2,19 +2,25 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import colors from "../constants/colors";
 import { formatCurrency } from "../utils/formatCurrency";
 
-export default function CartItem({ item, onIncrement, onDecrement, onRemove }) {
+export default function CartItem({ item, availableStock, incrementDisabled = false, onIncrement, onDecrement, onRemove }) {
   return (
     <View style={styles.row}>
       <Image source={{ uri: item.image }} style={styles.image} />
       <View style={styles.itemBody}>
         <Text numberOfLines={2} style={styles.itemTitle}>{item.title}</Text>
         <Text style={styles.itemPrice}>{formatCurrency(item.price)}</Text>
+        {Number.isFinite(availableStock) ? <Text style={styles.itemStock}>Disponible: {availableStock}</Text> : null}
         <View style={styles.controls}>
           <Pressable accessibilityRole="button" onPress={onDecrement} style={styles.counterButton}>
             <Text style={styles.counterText}>-</Text>
           </Pressable>
           <Text style={styles.quantity}>{item.quantity}</Text>
-          <Pressable accessibilityRole="button" onPress={onIncrement} style={styles.counterButton}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onIncrement}
+            disabled={incrementDisabled}
+            style={[styles.counterButton, incrementDisabled && styles.counterButtonDisabled]}
+          >
             <Text style={styles.counterText}>+</Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={onRemove} style={styles.removeButton}>
@@ -57,6 +63,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
   },
+  itemStock: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   controls: {
     flexDirection: "row",
     alignItems: "center",
@@ -69,6 +80,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 8,
     backgroundColor: colors.surfaceMuted,
+  },
+  counterButtonDisabled: {
+    opacity: 0.45,
   },
   counterText: {
     color: colors.ink,

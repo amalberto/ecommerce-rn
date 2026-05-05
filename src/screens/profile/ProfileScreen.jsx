@@ -18,14 +18,21 @@ function Avatar({ profile }) {
 }
 
 export default function ProfileScreen({ navigation }) {
-  const profile = useSelector((state) => state.profile.data);
+  const profile = useSelector((state) => state.profile.data) || { displayName: "Invitado", avatarUri: null };
+  const displayName = profile.displayName || "Invitado";
 
   return (
     <View style={styles.container}>
       <View style={styles.panel}>
         <Avatar profile={profile} />
-        <Text style={styles.name}>{profile?.displayName || "Invitado"}</Text>
-        <Text style={styles.email}>Perfil local guardado con SQLite</Text>
+        <Text style={styles.name}>{displayName}</Text>
+        <Text style={styles.email}>Modo invitado</Text>
+        <View style={styles.infoBox}>
+          <Text style={styles.infoLabel}>Nombre</Text>
+          <Text style={styles.infoValue}>{displayName}</Text>
+          <Text style={styles.infoLabel}>Perfil</Text>
+          <Text style={styles.infoValue}>Guardado en este dispositivo</Text>
+        </View>
         <PrimaryButton title="Editar perfil" onPress={() => navigation.navigate(ROUTES.EDIT_PROFILE)} style={styles.button} />
       </View>
     </View>
@@ -77,6 +84,28 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 15,
     textAlign: "center",
+  },
+  infoBox: {
+    alignSelf: "stretch",
+    marginTop: 18,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    padding: 14,
+    gap: 4,
+  },
+  infoLabel: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  infoValue: {
+    marginBottom: 8,
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
   },
   warning: {
     marginTop: 12,

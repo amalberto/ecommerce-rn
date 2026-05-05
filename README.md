@@ -9,6 +9,7 @@ Aplicación móvil de comercio electrónico desarrollada con Expo y React Native
 - Respaldo sin conexión con caché local SQLite y datos semilla.
 - Carrito global con Redux Toolkit y persistencia SQLite.
 - Creación y listado de órdenes usando RTK Query.
+- Validación y descuento de stock al confirmar el carrito.
 - Perfil local editable guardado con SQLite.
 - Foto de perfil con cámara o galería usando `expo-image-picker`.
 - Navegación con React Navigation, pestañas y navegadores tipo stack.
@@ -25,6 +26,34 @@ Aplicación móvil de comercio electrónico desarrollada con Expo y React Native
 - Firebase Realtime Database REST API.
 - expo-sqlite.
 - expo-image-picker.
+
+## Evidencia visual del flujo
+
+Las siguientes capturas corresponden a la APK instalada y ejecutada en un dispositivo Android físico. Muestran el flujo principal de tienda, detalle, carrito, creación de orden, actualización de stock y perfil local.
+
+| Catálogo | Detalle de producto | Producto agregado |
+| --- | --- | --- |
+| <img src="docs/evidence/flow-01-home-catalog.png" alt="Catálogo de productos" width="180" /> | <img src="docs/evidence/flow-02-product-detail.png" alt="Detalle de producto" width="180" /> | <img src="docs/evidence/flow-03-add-to-cart-alert.png" alt="Alerta de producto agregado" width="180" /> |
+
+| Carrito con stock | Orden creada | Listado de órdenes |
+| --- | --- | --- |
+| <img src="docs/evidence/flow-04-cart-stock.png" alt="Carrito con stock disponible" width="180" /> | <img src="docs/evidence/flow-05-order-created-alert.png" alt="Alerta de orden creada" width="180" /> | <img src="docs/evidence/flow-06-orders-list.png" alt="Listado de órdenes" width="180" /> |
+
+| Stock actualizado | Perfil local | Edición de perfil |
+| --- | --- | --- |
+| <img src="docs/evidence/flow-07-stock-updated.png" alt="Stock descontado después de comprar" width="180" /> | <img src="docs/evidence/flow-08-profile.png" alt="Perfil local" width="180" /> | <img src="docs/evidence/flow-09-edit-profile.png" alt="Edición de perfil con cámara y galería" width="180" /> |
+
+## Evidencia técnica de validación
+
+Validación realizada el 5/5/2026 sobre un Motorola Edge 20 pro conectado por ADB.
+
+- `npx expo start -c`: Metro inició correctamente.
+- `npx expo export --platform android --output-dir dist`: exportación Android completada, con 966 módulos empaquetados.
+- `./android/gradlew.bat -p android assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon`: build release completada correctamente.
+- `adb install -r builds/ecommerce-rn.apk`: instalación completada con `Success`.
+- `adb shell pm list packages com.amalberto.ecommercern`: paquete instalado como `com.amalberto.ecommercern`.
+- `adb shell pidof com.amalberto.ecommercern`: aplicación ejecutándose en el dispositivo.
+- APK final: `builds/ecommerce-rn.apk`, 29.707.352 bytes.
 
 ## Instalación
 
@@ -75,6 +104,7 @@ RTK Query consume Realtime Database con estas rutas REST:
 - `/products.json?orderBy="categoryId"&equalTo="{categoryId}"`
 - `/products/{productId}.json`
 - `/orders.json`
+- `/.json` para confirmar órdenes con actualización de stock en una operación REST.
 
 Estructura sugerida para Realtime Database:
 
@@ -102,7 +132,7 @@ Estructura sugerida para Realtime Database:
 }
 ```
 
-Para una demo sin autenticación, las reglas de Realtime Database deben permitir lectura de `categories`, `products` y `orders`, y escritura en `orders`.
+Para una demo sin autenticación, las reglas de Realtime Database deben permitir lectura de `categories`, `products` y `orders`, escritura en `orders` y actualización del campo `stock` en `products`.
 
 ## RTK Query
 
@@ -114,6 +144,9 @@ El servicio está en `src/services/shopApi.js` y exporta hooks generados:
 - `useGetCategoriesQuery`
 - `useGetOrdersQuery`
 - `useCreateOrderMutation`
+- `useCheckoutOrderMutation`
+
+`useCheckoutOrderMutation` valida el stock actual en Realtime Database, registra la orden y descuenta las unidades compradas. El carrito SQLite se limpia únicamente cuando la orden y el descuento se completan correctamente.
 
 `shopApi.reducer` y `shopApi.middleware` están registrados en `src/app/store.js`.
 
@@ -174,6 +207,7 @@ src/
 - Navegación: implementada con React Navigation, pestañas y stacks nativos.
 - Manejo de estado: `useState` para estado local de UI/perfil e imagen; Redux Toolkit para carrito y perfil global/local.
 - Firebase: usado solo como fuente de datos mediante RTK Query y Realtime Database REST API.
+- Órdenes: creadas en Firebase y asociadas al descuento de stock de productos.
 - Autenticación: removida; la app no requiere inicio de sesión.
 - Interfaz del dispositivo: implementada con `expo-image-picker` para cámara y galería.
 - Persistencia local: implementada con SQLite para carrito, perfil y caché sin conexión.

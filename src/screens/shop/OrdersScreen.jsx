@@ -18,11 +18,11 @@ export default function OrdersScreen() {
   useFocusEffect(refreshOrders);
 
   if (isLoading) {
-    return <LoadingView message="Cargando ordenes" />;
+    return <LoadingView message="Cargando órdenes" />;
   }
 
   if (isError && !items.length) {
-    return <ErrorState title="No se pudieron cargar las ordenes" message="Revisa la conexion con Firebase." onRetry={refetch} />;
+    return <ErrorState title="No se pudieron cargar las órdenes" message="Revisá tu conexión e intentá nuevamente." onRetry={refetch} />;
   }
 
   return (
@@ -35,7 +35,7 @@ export default function OrdersScreen() {
         windowSize={5}
         removeClippedSubviews
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refreshOrders} tintColor={colors.primary} />}
-        ListEmptyComponent={<EmptyState title="Sin ordenes" message="Tus compras confirmadas apareceran aca." />}
+        ListEmptyComponent={<EmptyState title="Sin órdenes" message="Tus compras confirmadas aparecerán acá." />}
         renderItem={({ item }) => <OrderItem item={item} />}
       />
     </View>

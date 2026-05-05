@@ -11,7 +11,7 @@ export default function HomeScreen({ navigation }) {
   const { categories, products, isLoading, isFetching, isError, source, refetch } = useCatalogData();
 
   if (isLoading) {
-    return <LoadingView message="Cargando catalogo" />;
+    return <LoadingView message="Cargando catálogo" />;
   }
 
   return (
@@ -29,13 +29,13 @@ export default function HomeScreen({ navigation }) {
       ListHeaderComponent={(
         <View>
           <View style={styles.header}>
-            <Text style={styles.kicker}>{source === "remote" ? "Catalogo sincronizado" : "Catalogo disponible"}</Text>
-            <Text style={styles.title}>Productos seleccionados para comprar desde el movil</Text>
-            {isError && source !== "remote" ? <Text style={styles.warning}>Mostrando datos locales mientras Firebase no responde.</Text> : null}
+            <Text style={styles.kicker}>{source === "remote" ? "Catálogo sincronizado" : "Catálogo disponible"}</Text>
+            <Text style={styles.title}>Productos seleccionados para comprar desde el móvil</Text>
+            {isError && source !== "remote" ? <Text style={styles.warning}>Mostrando datos guardados en este dispositivo.</Text> : null}
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Categorias</Text>
+            <Text style={styles.sectionTitle}>Categorías</Text>
           </View>
           <FlatList
             horizontal
@@ -45,7 +45,7 @@ export default function HomeScreen({ navigation }) {
             contentContainerStyle={styles.categories}
             initialNumToRender={4}
             windowSize={3}
-            ListEmptyComponent={<EmptyState title="Sin categorias" message="Tira para actualizar el catalogo." />}
+            ListEmptyComponent={<EmptyState title="Sin categorías" message="Tirá para actualizar el catálogo." />}
             renderItem={({ item }) => (
               <CategoryItem
                 category={item}
@@ -59,7 +59,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       )}
-      ListEmptyComponent={<EmptyState title="No hay productos" message="Tira para actualizar el catalogo." />}
+      ListEmptyComponent={<EmptyState title="No hay productos" message="Tirá para actualizar el catálogo." />}
       renderItem={({ item }) => (
         <ProductCard
           product={item}

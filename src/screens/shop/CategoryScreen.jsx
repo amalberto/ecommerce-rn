@@ -35,7 +35,7 @@ export default function CategoryScreen({ navigation, route }) {
         windowSize={5}
         removeClippedSubviews
         refreshControl={<RefreshControl refreshing={categoryQuery.isFetching} onRefresh={categoryQuery.refetch} tintColor={colors.primary} />}
-        ListEmptyComponent={<EmptyState title="Categoria vacia" message="No hay productos para mostrar." />}
+        ListEmptyComponent={<EmptyState title="Categoría vacía" message="No hay productos para mostrar." />}
         renderItem={({ item }) => (
           <ProductCard
             product={item}

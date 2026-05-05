@@ -13,6 +13,18 @@ const firebaseObjectToArray = (value) => {
   }));
 };
 
+const toNumber = (value, fallback = 0) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+};
+
+const mutationError = (message) => ({
+  error: {
+    status: "CUSTOM_ERROR",
+    error: message,
+  },
+});
+
 const normalizeCategory = (category) => ({
   ...category,
   id: String(category.id),
@@ -22,7 +34,30 @@ const normalizeProduct = (product) => ({
   ...product,
   id: String(product.id),
   categoryId: product.categoryId || product.category_id || product.category,
+  price: toNumber(product.price),
+  stock: toNumber(product.stock),
 });
+
+const buildOrder = (order) => ({
+  ...order,
+  status: order.status || "created",
+  createdAt: order.createdAt || new Date().toISOString(),
+});
+
+const createFirebaseKey = () => `order-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+const normalizeCheckoutItem = (item) => {
+  const productId = item.productId || item.id || "";
+
+  return {
+    id: String(productId),
+    productId: String(productId),
+    title: item.title,
+    price: toNumber(item.price),
+    quantity: toNumber(item.quantity),
+    image: item.image || null,
+  };
+};
 
 const sortByCreatedAtDesc = (items) => {
   return [...items].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
@@ -103,13 +138,94 @@ export const shopApi = createApi({
       query: (order) => ({
         url: "/orders.json",
         method: "POST",
-        body: {
-          ...order,
-          status: order.status || "created",
-          createdAt: order.createdAt || new Date().toISOString(),
-        },
+        body: buildOrder(order),
       }),
       invalidatesTags: [{ type: "Orders", id: "LIST" }],
+    }),
+    checkoutOrder: builder.mutation({
+      async queryFn(order = {}, _queryApi, _extraOptions, baseQuery) {
+        const checkoutItems = (order.items || []).map(normalizeCheckoutItem);
+
+        if (!checkoutItems.length) {
+          return mutationError("El carrito está vacío.");
+        }
+
+        const stockUpdates = [];
+
+        for (const item of checkoutItems) {
+          if (!item.productId || item.quantity <= 0) {
+            return mutationError("Hay un producto inválido en el carrito.");
+          }
+
+          const productResult = await baseQuery(`/products/${item.productId}.json`);
+
+          if (productResult.error) {
+            return { error: productResult.error };
+          }
+
+          if (!productResult.data) {
+            return mutationError(`${item.title || "El producto"} ya no está disponible.`);
+          }
+
+          const currentProduct = normalizeProduct({ ...productResult.data, id: item.productId });
+
+          if (currentProduct.stock < item.quantity) {
+            return mutationError("No hay stock suficiente.");
+          }
+
+          stockUpdates.push({
+            productId: item.productId,
+            nextStock: currentProduct.stock - item.quantity,
+          });
+        }
+
+        const createdAt = new Date().toISOString();
+        const orderId = createFirebaseKey();
+        const orderItems = checkoutItems.map((item) => ({
+          ...item,
+          subtotal: item.price * item.quantity,
+        }));
+        const total = Number.isFinite(Number(order.total))
+          ? Number(order.total)
+          : orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+        const nextOrder = buildOrder({
+          ...order,
+          id: orderId,
+          items: orderItems,
+          total,
+          createdAt,
+        });
+        const updates = {
+          [`orders/${orderId}`]: nextOrder,
+        };
+
+        stockUpdates.forEach(({ productId, nextStock }) => {
+          updates[`products/${productId}/stock`] = nextStock;
+        });
+
+        const checkoutResult = await baseQuery({
+          url: "/.json",
+          method: "PATCH",
+          body: updates,
+        });
+
+        if (checkoutResult.error) {
+          return { error: checkoutResult.error };
+        }
+
+        return { data: nextOrder };
+      },
+      invalidatesTags: (result, error, order) => {
+        if (!result) {
+          return [];
+        }
+
+        return [
+          { type: "Orders", id: "LIST" },
+          { type: "Products", id: "LIST" },
+          ...(order?.items || []).map((item) => ({ type: "Products", id: String(item.productId || item.id) })),
+        ];
+      },
     }),
   }),
 });
@@ -121,4 +237,5 @@ export const {
   useGetCategoriesQuery,
   useGetOrdersQuery,
   useCreateOrderMutation,
+  useCheckoutOrderMutation,
 } = shopApi;

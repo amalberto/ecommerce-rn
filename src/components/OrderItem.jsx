@@ -2,12 +2,20 @@ import { StyleSheet, Text, View } from "react-native";
 import colors from "../constants/colors";
 import { formatCurrency } from "../utils/formatCurrency";
 
+const statusLabels = {
+  created: "Creada",
+  pending: "Pendiente",
+  completed: "Completada",
+};
+
 export default function OrderItem({ item }) {
+  const status = item.status || "created";
+
   return (
     <View style={styles.order}>
       <View style={styles.orderHeader}>
         <Text style={styles.orderId}>#{String(item.id || item.name || "orden").slice(-6).toUpperCase()}</Text>
-        <Text style={styles.status}>{item.status || "created"}</Text>
+        <Text style={styles.status}>{statusLabels[status] || status}</Text>
       </View>
       <Text style={styles.date}>{item.createdAt ? new Date(item.createdAt).toLocaleString("es-AR") : "Sin fecha"}</Text>
       <Text style={styles.items}>{item.items?.length || 0} productos</Text>

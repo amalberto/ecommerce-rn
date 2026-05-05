@@ -14,13 +14,15 @@ export default function ProductDetailScreen({ route }) {
   const { productId } = route.params;
   const { product, isLoading, isError } = useProductData(productId);
   const cartStatus = useSelector((state) => state.cart.status);
+  const stock = Number(product?.stock ?? 0);
+  const isOutOfStock = stock <= 0;
 
   const handleAdd = async () => {
     try {
       await dispatch(addCartItem(product)).unwrap();
-      Alert.alert("Producto agregado", "El carrito se guardo en SQLite.");
+      Alert.alert("Producto agregado", "Producto agregado al carrito.");
     } catch (error) {
-      Alert.alert("No se pudo agregar", getErrorMessage(error));
+      Alert.alert("No se pudo agregar el producto", getErrorMessage(error));
     }
   };
 
@@ -29,7 +31,7 @@ export default function ProductDetailScreen({ route }) {
   }
 
   if (!product) {
-    return <EmptyState title="Producto no encontrado" message="Vuelve al catalogo y actualiza la lista." />;
+    return <EmptyState title="Producto no encontrado" message="Volvé al catálogo y actualizá la lista." />;
   }
 
   return (
@@ -40,8 +42,14 @@ export default function ProductDetailScreen({ route }) {
         <Text style={styles.price}>{formatCurrency(product.price)}</Text>
         {isError ? <Text style={styles.warning}>Mostrando datos locales disponibles.</Text> : null}
         <Text style={styles.description}>{product.description}</Text>
-        <Text style={styles.stock}>Stock disponible: {product.stock ?? 0}</Text>
-        <PrimaryButton title="Agregar al carrito" onPress={handleAdd} loading={cartStatus === "loading"} style={styles.button} />
+        <Text style={styles.stock}>Stock disponible: {stock}</Text>
+        <PrimaryButton
+          title={isOutOfStock ? "Sin stock" : "Agregar al carrito"}
+          onPress={handleAdd}
+          loading={cartStatus === "loading"}
+          disabled={isOutOfStock}
+          style={styles.button}
+        />
       </View>
     </ScrollView>
   );

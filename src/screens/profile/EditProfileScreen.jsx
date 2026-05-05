@@ -15,7 +15,7 @@ export default function EditProfileScreen({ navigation }) {
   const [avatarUri, setAvatarUri] = useState(null);
 
   useEffect(() => {
-    setDisplayName(profile?.displayName || "");
+    setDisplayName(profile?.displayName || "Invitado");
     setAvatarUri(profile?.avatarUri || null);
   }, [profile]);
 
@@ -23,7 +23,7 @@ export default function EditProfileScreen({ navigation }) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galeria.");
+      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería.");
       return;
     }
 
@@ -43,7 +43,7 @@ export default function EditProfileScreen({ navigation }) {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Permiso requerido", "Necesitamos acceso a tu camara.");
+      Alert.alert("Permiso requerido", "Necesitamos acceso a tu cámara.");
       return;
     }
 
@@ -83,13 +83,13 @@ export default function EditProfileScreen({ navigation }) {
             <Image source={{ uri: avatarUri }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarText}>Foto</Text>
+              <Text style={styles.avatarText}>{displayName.trim().charAt(0).toUpperCase() || "I"}</Text>
             </View>
           )}
         </View>
         <View style={styles.actions}>
-          <PrimaryButton title="Galeria" onPress={pickImage} variant="secondary" style={styles.actionButton} />
-          <PrimaryButton title="Camara" onPress={takePhoto} variant="secondary" style={styles.actionButton} />
+          <PrimaryButton title="Galería" onPress={pickImage} variant="secondary" style={styles.actionButton} />
+          <PrimaryButton title="Cámara" onPress={takePhoto} variant="secondary" style={styles.actionButton} />
         </View>
         <TextInput
           placeholder="Nombre"
@@ -98,7 +98,7 @@ export default function EditProfileScreen({ navigation }) {
           onChangeText={setDisplayName}
           style={styles.input}
         />
-        <Text style={styles.email}>La foto y el nombre se guardan localmente con SQLite.</Text>
+        <Text style={styles.email}>La foto y el nombre se guardan en este dispositivo.</Text>
         <PrimaryButton title="Guardar cambios" onPress={handleSave} loading={status === "loading"} style={styles.saveButton} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 75,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.primary,
   },
   avatarText: {
-    color: colors.muted,
-    fontSize: 16,
+    color: colors.surface,
+    fontSize: 54,
     fontWeight: "900",
   },
   actions: {

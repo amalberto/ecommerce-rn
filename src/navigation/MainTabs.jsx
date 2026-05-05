@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { ROUTES } from "../constants/routes";
 import HomeScreen from "../screens/shop/HomeScreen";
@@ -15,11 +16,18 @@ import { selectCartCount } from "../features/cart/cartSlice";
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+const tabIcons = {
+  [ROUTES.SHOP_TAB]: "storefront-outline",
+  [ROUTES.CART_TAB]: "cart-outline",
+  [ROUTES.ORDERS_TAB]: "receipt-outline",
+  [ROUTES.PROFILE_TAB]: "person-outline",
+};
+
 function ShopStack() {
   return (
     <Stack.Navigator screenOptions={stackOptions}>
       <Stack.Screen name={ROUTES.HOME} component={HomeScreen} options={{ title: "Tienda" }} />
-      <Stack.Screen name={ROUTES.CATEGORY} component={CategoryScreen} options={({ route }) => ({ title: route.params?.title || "Categoria" })} />
+      <Stack.Screen name={ROUTES.CATEGORY} component={CategoryScreen} options={({ route }) => ({ title: route.params?.title || "Categoría" })} />
       <Stack.Screen name={ROUTES.PRODUCT_DETAIL} component={ProductDetailScreen} options={{ title: "Detalle" }} />
     </Stack.Navigator>
   );
@@ -46,10 +54,13 @@ export default function MainTabs() {
 
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={tabIcons[route.name] || "ellipse-outline"} size={size} color={color} />
+        ),
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
@@ -58,7 +69,7 @@ export default function MainTabs() {
           fontSize: 12,
           fontWeight: "700",
         },
-      }}
+      })}
     >
       <Tab.Screen name={ROUTES.SHOP_TAB} component={ShopStack} options={{ title: "Tienda" }} />
       <Tab.Screen
@@ -66,7 +77,7 @@ export default function MainTabs() {
         component={CartScreen}
         options={{ title: "Carrito", tabBarBadge: cartCount || undefined }}
       />
-      <Tab.Screen name={ROUTES.ORDERS_TAB} component={OrdersScreen} options={{ title: "Ordenes" }} />
+      <Tab.Screen name={ROUTES.ORDERS_TAB} component={OrdersScreen} options={{ title: "Órdenes" }} />
       <Tab.Screen name={ROUTES.PROFILE_TAB} component={ProfileStack} options={{ title: "Perfil" }} />
     </Tab.Navigator>
   );
