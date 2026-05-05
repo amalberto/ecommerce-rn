@@ -31,20 +31,16 @@ export default function CartScreen() {
     }
   };
 
-  if (!items.length) {
-    return (
-      <View style={styles.container}>
-        <EmptyState title="Carrito vacio" message="Agrega productos desde el catalogo." />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, !items.length && styles.emptyList]}
+        initialNumToRender={6}
+        windowSize={5}
+        removeClippedSubviews
+        ListEmptyComponent={<EmptyState title="Carrito vacio" message="Agrega productos desde el catalogo." />}
         renderItem={({ item }) => (
           <CartItem
             item={item}
@@ -54,13 +50,15 @@ export default function CartScreen() {
           />
         )}
       />
-      <View style={styles.summary}>
-        <View>
-          <Text style={styles.summaryLabel}>Total</Text>
-          <Text style={styles.summaryTotal}>{formatCurrency(total)}</Text>
+      {items.length ? (
+        <View style={styles.summary}>
+          <View>
+            <Text style={styles.summaryLabel}>Total</Text>
+            <Text style={styles.summaryTotal}>{formatCurrency(total)}</Text>
+          </View>
+          <PrimaryButton title="Confirmar" onPress={handleCreateOrder} loading={isCreatingOrder} style={styles.confirmButton} />
         </View>
-        <PrimaryButton title="Confirmar" onPress={handleCreateOrder} loading={isCreatingOrder} style={styles.confirmButton} />
-      </View>
+      ) : null}
     </View>
   );
 }
@@ -73,6 +71,10 @@ const styles = StyleSheet.create({
   list: {
     padding: 20,
     gap: 12,
+  },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
   summary: {
     flexDirection: "row",

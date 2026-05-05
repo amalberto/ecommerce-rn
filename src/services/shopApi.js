@@ -2,24 +2,43 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { cacheCategories, cacheProducts } from "../db/catalogRepository";
 import { firebaseRestBaseUrl } from "../firebase/firebaseConfig";
 
-const objectToArray = (value) => {
-  if (!value) {
+const firebaseObjectToArray = (value) => {
+  if (!value || typeof value !== "object") {
     return [];
   }
 
   return Object.entries(value).map(([key, item]) => ({
-    id: item?.id || key,
+    id: item?.id ? String(item.id) : key,
     ...item,
   }));
 };
 
+const normalizeCategory = (category) => ({
+  ...category,
+  id: String(category.id),
+});
+
 const normalizeProduct = (product) => ({
   ...product,
-  categoryId: product.categoryId || product.category_id,
+  id: String(product.id),
+  categoryId: product.categoryId || product.category_id || product.category,
 });
 
 const sortByCreatedAtDesc = (items) => {
   return [...items].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+};
+
+const collectionTags = (type, result) => {
+  const baseTag = { type, id: "LIST" };
+
+  if (!Array.isArray(result)) {
+    return [baseTag];
+  }
+
+  return [
+    ...result.map((item) => ({ type, id: item.id })),
+    baseTag,
+  ];
 };
 
 export const shopApi = createApi({
@@ -31,8 +50,8 @@ export const shopApi = createApi({
   endpoints: (builder) => ({
     getProducts: builder.query({
       query: () => "/products.json",
-      transformResponse: (response) => objectToArray(response).map(normalizeProduct),
-      providesTags: ["Products"],
+      transformResponse: (response) => firebaseObjectToArray(response).map(normalizeProduct),
+      providesTags: (result) => collectionTags("Products", result),
       async onQueryStarted(_, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -49,10 +68,21 @@ export const shopApi = createApi({
       transformResponse: (response, meta, productId) => (response ? normalizeProduct({ id: productId, ...response }) : null),
       providesTags: (result, error, productId) => [{ type: "Products", id: productId }],
     }),
+    getProductsByCategory: builder.query({
+      query: (categoryId) => ({
+        url: "/products.json",
+        params: {
+          orderBy: '"categoryId"',
+          equalTo: `"${categoryId}"`,
+        },
+      }),
+      transformResponse: (response) => firebaseObjectToArray(response).map(normalizeProduct),
+      providesTags: (result) => collectionTags("Products", result),
+    }),
     getCategories: builder.query({
       query: () => "/categories.json",
-      transformResponse: objectToArray,
-      providesTags: ["Categories"],
+      transformResponse: (response) => firebaseObjectToArray(response).map(normalizeCategory),
+      providesTags: (result) => collectionTags("Categories", result),
       async onQueryStarted(_, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -66,8 +96,8 @@ export const shopApi = createApi({
     }),
     getOrders: builder.query({
       query: () => "/orders.json",
-      transformResponse: (response) => sortByCreatedAtDesc(objectToArray(response)),
-      providesTags: ["Orders"],
+      transformResponse: (response) => sortByCreatedAtDesc(firebaseObjectToArray(response)),
+      providesTags: (result) => collectionTags("Orders", result),
     }),
     createOrder: builder.mutation({
       query: (order) => ({
@@ -79,7 +109,7 @@ export const shopApi = createApi({
           createdAt: order.createdAt || new Date().toISOString(),
         },
       }),
-      invalidatesTags: ["Orders"],
+      invalidatesTags: [{ type: "Orders", id: "LIST" }],
     }),
   }),
 });
@@ -87,6 +117,7 @@ export const shopApi = createApi({
 export const {
   useGetProductsQuery,
   useGetProductQuery,
+  useGetProductsByCategoryQuery,
   useGetCategoriesQuery,
   useGetOrdersQuery,
   useCreateOrderMutation,

@@ -22,6 +22,9 @@ export default function HomeScreen({ navigation }) {
       numColumns={2}
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.content}
+      initialNumToRender={6}
+      windowSize={5}
+      removeClippedSubviews
       refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.primary} />}
       ListHeaderComponent={(
         <View>
@@ -40,6 +43,9 @@ export default function HomeScreen({ navigation }) {
             data={categories}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.categories}
+            initialNumToRender={4}
+            windowSize={3}
+            ListEmptyComponent={<EmptyState title="Sin categorias" message="Tira para actualizar el catalogo." />}
             renderItem={({ item }) => (
               <CategoryItem
                 category={item}

@@ -31,6 +31,9 @@ export default function OrdersScreen() {
         data={items}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        initialNumToRender={6}
+        windowSize={5}
+        removeClippedSubviews
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refreshOrders} tintColor={colors.primary} />}
         ListEmptyComponent={<EmptyState title="Sin ordenes" message="Tus compras confirmadas apareceran aca." />}
         renderItem={({ item }) => <OrderItem item={item} />}

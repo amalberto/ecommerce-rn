@@ -43,6 +43,7 @@ export const useCatalogData = () => {
 
   const isLoading = (productsQuery.isLoading || categoriesQuery.isLoading) && source === "seed";
   const isError = productsQuery.isError || categoriesQuery.isError;
+  const error = productsQuery.error || categoriesQuery.error;
 
   const refetch = useCallback(() => {
     productsQuery.refetch();
@@ -57,10 +58,11 @@ export const useCatalogData = () => {
     isLoading,
     isFetching: productsQuery.isFetching || categoriesQuery.isFetching,
     isError,
-    error: productsQuery.error || categoriesQuery.error,
+    error,
     refetch,
   }), [
     categories,
+    error,
     isError,
     isLoading,
     products,

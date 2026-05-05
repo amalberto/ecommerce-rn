@@ -20,6 +20,7 @@
       }
     },
     "android": {
+      "package": "com.amalberto.ecommercern",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -34,7 +35,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-image-picker"
     ]
   }
 }

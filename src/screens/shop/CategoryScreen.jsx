@@ -1,30 +1,40 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import EmptyState from "../../components/EmptyState";
 import LoadingView from "../../components/LoadingView";
 import ProductCard from "../../components/ProductCard";
 import colors from "../../constants/colors";
 import { ROUTES } from "../../constants/routes";
 import { useCatalogData } from "../../hooks/useCatalogData";
+import { useGetProductsByCategoryQuery } from "../../services/shopApi";
 
 export default function CategoryScreen({ navigation, route }) {
   const { categoryId, title } = route.params;
   const { products, isLoading, isError } = useCatalogData();
-  const categoryProducts = products.filter((item) => item.categoryId === categoryId);
+  const categoryQuery = useGetProductsByCategoryQuery(categoryId);
+  const fallbackProducts = products.filter((item) => item.categoryId === categoryId);
+  const hasRemoteResult = Array.isArray(categoryQuery.data) && !categoryQuery.isError;
+  const categoryProducts = hasRemoteResult ? categoryQuery.data : fallbackProducts;
+  const isCategoryLoading = categoryQuery.isLoading && !fallbackProducts.length;
+  const hasQueryWarning = isError || categoryQuery.isError;
 
-  if (isLoading) {
+  if (isLoading || isCategoryLoading) {
     return <LoadingView message="Cargando productos" />;
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      {isError ? <Text style={styles.warning}>Mostrando datos locales disponibles.</Text> : null}
+      {hasQueryWarning ? <Text style={styles.warning}>Mostrando datos locales disponibles.</Text> : null}
       <FlatList
         data={categoryProducts}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.list}
+        initialNumToRender={6}
+        windowSize={5}
+        removeClippedSubviews
+        refreshControl={<RefreshControl refreshing={categoryQuery.isFetching} onRefresh={categoryQuery.refetch} tintColor={colors.primary} />}
         ListEmptyComponent={<EmptyState title="Categoria vacia" message="No hay productos para mostrar." />}
         renderItem={({ item }) => (
           <ProductCard
